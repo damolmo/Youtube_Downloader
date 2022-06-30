@@ -38,6 +38,7 @@ pygame.display.set_caption("Youtube Downloader")
 
 ## Assets
 # Logo
+mini_logo = pygame.transform.scale(pygame.image.load(os.path.join('Assets/logo', "yt_01.gif")), (240,240))
 yt_01 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/logo', "yt_01.gif")), (480,480))
 yt_02 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/logo', "yt_02.gif")), (480,480))
 yt_03 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/logo', "yt_03.gif")), (480,480))
@@ -46,3 +47,8 @@ yt_03 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/logo', "yt
 sub_01 = pygame.image.load(os.path.join('Assets/subtitle', "sub_01.png"))
 sub_02 = pygame.image.load(os.path.join('Assets/subtitle', "sub_02.png"))
 sub_03 = pygame.image.load(os.path.join('Assets/subtitle', "sub_03.png"))
+
+# Buttons
+video_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "video.png")), (300,100))
+audio_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "audio.png")), (300,100))
+

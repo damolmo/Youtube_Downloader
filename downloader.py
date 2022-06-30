@@ -1,6 +1,13 @@
 from resources import *
 import pytube
 from pytube import YouTube
+import urllib.request
+from io import BytesIO
+from PIL import Image, ImageTk
+import wget
+import threading
+import os.path
+import platform
 
 vec = pygame.math.Vector2
 
@@ -33,6 +40,12 @@ class Downloader :
         self.path = 'downloads/'
         self.yt_video = YouTube
         self.mp4 = ''
+        self.choose_format = False
+        self.preview_photo =  YouTube
+        self.video_title = ''
+
+        self.download_video_rect = pygame.Rect(600, 400, 300, 100)
+        self.download_audio_rect = pygame.Rect(940, 400, 300, 100)
 
     def get_video (self) :
         # Creation of youtube object
@@ -42,9 +55,66 @@ class Downloader :
         # Get video properties + downloads it
         self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
 
+    def download_audio(self) :
+        # Get audio properties + downloads it
+        audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
+        base, ext = os.path.splitext(audio)
+        new_file = base + '.mp3'
+        os.rename(audio, new_file)
+
+    def get_video_title(self) :
+        # Get the title from the current video
+        self.video_title = self.yt_video.streams.first().title
+
+    def get_video_preview(self) :
+        # Get the img from the url 
+        self.preview_photo =  YouTube(self.link).thumbnail_url
+
+        # Temp download the img
+        try :
+            if platform.system() == "Linux" :
+                os.system("rm -f downloads/img.jpg")
+            else :
+                os.system("del /f downloads\img.jpg")
+        except :
+            print("img file doesn't exist! Not an issue\nWe'll download a new cover")
+
+        wget.download(self.preview_photo, 'downloads/img.jpg')
+
+        # Video data already downloaded
+        # Going to the next view
+        self.downloader = 0
+        self.choose_format = True
+
+
+    def draw_video_preview (self) :
+
+        while self.choose_format :
+
+            self.screen.fill("#000000")
+            self.screen.blit(mini_logo, (950, -50))
+
+            text = self.font.render(self.video_title, 1, self.color)
+            self.screen.blit(text, (50, 150))
+
+            # Video preview
+            video_preview = pygame.transform.scale(pygame.image.load(os.path.join('downloads/img.jpg')), (500, 380))
+            self.screen.blit(video_preview, (50, 250))
+
+            # Video Download Buttons
+            self.screen.blit(video_button, (600, 400))
+            self.screen.blit(audio_button, (940, 400))
+
+            # Display rect
+            #pygame.draw.rect(WIN, BLACK, self.download_video)
+            #pygame.draw.rect(WIN, WHITE, self.download_audio)
+
+            pygame.display.update()
+
+
     def player_control(self) :
 
-       if self.downloader > 0 :
+       while self.downloader > 0 :
 
             for event in pygame.event.get() :
                 # Closes the game
@@ -68,41 +138,98 @@ class Downloader :
 
                     if event.key == pygame.K_RETURN :
                             self.link = self.link[:-1]
-                            yt_app_data["YT_URL"]["URL"] = self.link
                             self.get_video() # Gets the video from the given url
-                            self.download_video() # Download the video
+                            self.get_video_title()
+                            self.get_video_preview() # Get the required video data
                             enter = False
-                            self.link = 'https://www.youtube.com/watch?v='
                             active = False
-                            write_json()
+                        
+    def preview_controller(self) :
+
+       while self.choose_format :
+
+            for event in pygame.event.get() :
+                # Closes the game
+                if event.type == pygame.QUIT:
+                    self.downloader = 0
+                    self.choose_format = False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.check_click(event.pos)
+
 
 
     def update_mouse_position(self, dt):
         self.mouse = vec(pygame.mouse.get_pos())
 
+    def check_click (self, mouse) :
+
+        if self.download_video_rect.collidepoint(mouse) :
+            self.download_video()
+
+        elif self.download_audio_rect.collidepoint(mouse) :
+            self.download_audio()
+
 
     def draw(self):
-        self.screen.fill("#c4302b")
-        self.screen.blit(yt_01, (360, -100))
 
-        self.input_box.w = (width * 2) - 100
-        text = self.font.render(self.link, True, self.color)
-        
-        WIN.blit(text, (self.input_box.x+5, self.input_box.y+25))
-        pygame.draw.rect(self.screen, self.color, self.input_box, 2)
+        while self.downloader > 0 :
+            self.screen.fill("#000000")
+            self.screen.blit(yt_01, (360, -100))
+
+            dialog = self.font.render("Enter Youtube Video ID :", 1, WHITE)
+            self.screen.blit(dialog, (50, 340))
+
+            self.input_box.w = (width * 2) - 100
+            text = self.font.render(self.link, True, self.color)
+            
+            WIN.blit(text, (self.input_box.x+5, self.input_box.y+25))
+            pygame.draw.rect(self.screen, self.color, self.input_box, 2)
 
 
-        pygame.display.update()
+            pygame.display.update()
 
 
     def start_app (self) :
 
+        delta_time = self.clock.tick() / 1000
+
+        # Create three new threads
+        thread_1 = threading.Thread(target = self.player_control, name ="mouse")
+        thread_2 = threading.Thread(target = self.update_mouse_position, name="ui", args=([delta_time]))
+        thread_3 = threading.Thread(target = self.draw, name="ui")
+
+
+        # Start Both Threads
+        thread_3.start()
+        thread_1.start()
+        thread_2.start()
+
+        start = self.player_control()
+
+        # Wait for both threads to end
         while self.downloader > 0:
-            delta_time = self.clock.tick() / 1000
-            self.player_control()        
+            thread_3.join()
+            thread_1.join()
+            thread_2.join()
+
+        # Create three new threads
+        thread_1 = threading.Thread(target = self.draw_video_preview, name ="mouse")
+        thread_2 = threading.Thread(target = self.preview_controller, name="ui", args=([delta_time]))
+        thread_3 = threading.Thread(target = self.update_mouse_position, name="ui")
+
+
+        # Start Both Threads
+        thread_1.start()
+        thread_2.start()
+        thread_3.start()
+
+        start = self.preview_controller()
+
+        while self.choose_format :
+            self.draw_video_preview()
+            self.preview_controller()
             self.update_mouse_position(delta_time)
-            self.draw()
 
 
-    
         pygame.quit()

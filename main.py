@@ -12,7 +12,9 @@ os.system("pip install pytube")
 os.system("pip install pytube3")
 os.system("pip3 install pygame")
 os.system("pip install pygame")
-os.system("python -m pip install git+https://github.com/pytube/pytube")
+#os.system("python -m pip install git+https://github.com/pytube/pytube")
+os.system("pip install pillow")
+
 
 import pygame
 import wget
@@ -66,7 +68,7 @@ def create_window() :
 
 
 def create_window_animation(LOGO, SUBTITLE) :
-    WIN.fill("#c4302b")
+    WIN.fill("#000000")
     WIN.blit(LOGO, (360, -100))
 
     WIN.blit(SUBTITLE, (320, 450))
