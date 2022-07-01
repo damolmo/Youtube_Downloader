@@ -63,7 +63,7 @@ class Downloader :
 
         # Check if we're downloading from a video or a playlist
 
-        if self.format == "video" :
+        if self.format == "video" or self.format == "short" :
             # Get video properties + downloads it
             self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
 
@@ -78,7 +78,7 @@ class Downloader :
 
         audio = ''
 
-        if self.format == "video" :
+        if self.format == "video" or self.format == "short" :
             # Get audio properties + downloads it
             audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
             base, ext = os.path.splitext(audio)
