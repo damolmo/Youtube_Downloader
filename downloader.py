@@ -63,18 +63,34 @@ class Downloader :
 
         # Check if we're downloading from a video or a playlist
 
-        # Get video properties + downloads it
-        self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
+        if self.format == "video" :
+            # Get video properties + downloads it
+            self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
+
+        else :
+            print("okay")
+            for video in self.yt_playlist.videos:
+                video.streams.first().download(self.path)
 
     def download_audio(self) :
 
         # Check if we're downloading from a video or a playlist
 
-        # Get audio properties + downloads it
-        audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
-        base, ext = os.path.splitext(audio)
-        new_file = base + '.mp3'
-        os.rename(audio, new_file)
+        audio = ''
+
+        if self.format == "video" :
+            # Get audio properties + downloads it
+            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
+            base, ext = os.path.splitext(audio)
+            new_file = base + '.mp3'
+            os.rename(audio, new_file)
+
+        else :
+            for mp3 in self.yt_playlist.videos :
+                audio = mp3.streams.filter(only_audio=True).first().download(self.path)
+                base, ext = os.path.splitext(audio)
+                new_file = base + '.mp3'
+                os.rename(audio, new_file)
 
     def get_video_title(self) :
         # Get the title from the current video
