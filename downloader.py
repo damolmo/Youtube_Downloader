@@ -43,6 +43,7 @@ class Downloader :
         self.choose_format = False
         self.preview_photo =  YouTube
         self.video_title = ''
+        self.description = YouTube
 
         self.download_video_rect = pygame.Rect(600, 400, 300, 100)
         self.download_audio_rect = pygame.Rect(940, 400, 300, 100)
@@ -86,6 +87,10 @@ class Downloader :
         self.downloader = 0
         self.choose_format = True
 
+    def get_description(self) :
+        # Get video description
+        self.description = self.yt_video.description
+
 
     def draw_video_preview (self) :
 
@@ -94,12 +99,59 @@ class Downloader :
             self.screen.fill("#000000")
             self.screen.blit(mini_logo, (950, -50))
 
-            text = self.font.render(self.video_title, 1, self.color)
-            self.screen.blit(text, (50, 150))
+            # Video Title
+
+            size = 0
+            title = ''
+
+            for char in self.video_title :
+                size += 1
+
+            
+            for char in self.video_title[0:40:1]:
+                title+=char
+
+            text = self.font.render(title, 1, self.color)
+            self.screen.blit(text, (50, 100))
+
+
+
+            # Video Description
+            # Total size of the yt video description
+            max_size = 0
+
+            for char in self.description :
+                max_size +=1
+            
+            # Show description on display
+
+            phrase = ''
+            start = 0
+            end = 85
+            height = 170
+            max_length = 0
+
+            while max_size >= 85 and max_length < 340 :
+
+                for char in self.description[start:end:1] :
+                    phrase += char
+
+                phrase.replace("\n", '')
+                description = small_font.render(phrase, 1, WHITE)
+                self.screen.blit(description, (50, height))
+
+                phrase = ''
+                max_size -=85
+                max_length +=85
+                start += 85
+                end += 85
+                height +=30
+
 
             # Video preview
             video_preview = pygame.transform.scale(pygame.image.load(os.path.join('downloads/img.jpg')), (500, 380))
-            self.screen.blit(video_preview, (50, 250))
+            self.screen.blit(video_preview, (50, 280))
+
 
             # Video Download Buttons
             self.screen.blit(video_button, (600, 400))
@@ -140,6 +192,7 @@ class Downloader :
                             self.link = self.link[:-1]
                             self.get_video() # Gets the video from the given url
                             self.get_video_title()
+                            self.get_description()
                             self.get_video_preview() # Get the required video data
                             enter = False
                             active = False
@@ -215,8 +268,8 @@ class Downloader :
 
         # Create three new threads
         thread_1 = threading.Thread(target = self.draw_video_preview, name ="mouse")
-        thread_2 = threading.Thread(target = self.preview_controller, name="ui", args=([delta_time]))
-        thread_3 = threading.Thread(target = self.update_mouse_position, name="ui")
+        thread_2 = threading.Thread(target = self.preview_controller, name="ui")
+        thread_3 = threading.Thread(target = self.update_mouse_position, name="ui", args=([delta_time]))
 
 
         # Start Both Threads
