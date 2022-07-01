@@ -57,4 +57,14 @@ videos_button = pygame.image.load(os.path.join('Assets/buttons', "videos.png"))
 short_button = pygame.image.load(os.path.join('Assets/buttons', "shorts.png"))
 playlist_button = pygame.image.load(os.path.join('Assets/buttons', "playlist.png"))
 
+# Loader
+loader_01 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_0_delay-0.1s.gif")), (100,100))
+loader_02 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_1_delay-0.1s.gif")), (100,100))
+loader_03 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_2_delay-0.1s.gif")), (100,100))
+loader_04 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_3_delay-0.1s.gif")), (100,100))
+loader_05 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_4_delay-0.1s.gif")), (100,100))
+loader_06 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_5_delay-0.1s.gif")), (100,100))
+loader_07 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_6_delay-0.1s.gif")), (100,100))
+loader_08 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_7_delay-0.1s.gif")), (100,100))
+
 
