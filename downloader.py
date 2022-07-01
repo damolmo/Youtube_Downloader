@@ -1,6 +1,7 @@
 from resources import *
 import pytube
 from pytube import YouTube
+from pytube import Playlist
 import urllib.request
 from io import BytesIO
 from PIL import Image, ImageTk
@@ -44,6 +45,7 @@ class Downloader :
         self.preview_photo =  YouTube
         self.video_title = ''
         self.description = YouTube
+        self.format = ''
 
         self.download_video_rect = pygame.Rect(600, 400, 300, 100)
         self.download_audio_rect = pygame.Rect(940, 400, 300, 100)
@@ -242,10 +244,25 @@ class Downloader :
 
             pygame.display.update()
 
+    def assign_format(self) :
 
-    def start_app (self) :
+        if self.format == "video" :
+            self.link  = 'https://www.youtube.com/watch?v='
 
+        elif self.format == "short" :
+            self.link = 'https://www.youtube.com/shorts/'
+
+        elif self.format == "playlist" :
+            self.link = 'https://www.youtube.com/watch?v='
+
+
+    def start_app (self, formato) :
+
+        self.format = formato
         delta_time = self.clock.tick() / 1000
+
+        # Assign format
+        self.assign_format()
 
         # Create three new threads
         thread_1 = threading.Thread(target = self.player_control, name ="mouse")

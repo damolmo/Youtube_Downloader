@@ -35,6 +35,7 @@ pygame.mixer.init() # Import sounds
 # Local imports
 from resources import *
 from downloader import *
+from format import *
 
 # Global variables
 vec = pygame.math.Vector2
@@ -90,8 +91,8 @@ class Main :
     def check_click(self, mouse) :
         if self.rect.collidepoint(mouse):
             finalize_program()
-            down = Downloader()
-            down.start_app()
+            video_format = Format()
+            video_format.start_choosing_format()
 
     def user_control(self) :
 

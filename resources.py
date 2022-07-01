@@ -52,3 +52,9 @@ sub_03 = pygame.image.load(os.path.join('Assets/subtitle', "sub_03.png"))
 video_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "video.png")), (300,100))
 audio_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "audio.png")), (300,100))
 
+# Formats
+videos_button = pygame.image.load(os.path.join('Assets/buttons', "videos.png"))
+short_button = pygame.image.load(os.path.join('Assets/buttons', "shorts.png"))
+playlist_button = pygame.image.load(os.path.join('Assets/buttons', "playlist.png"))
+
+
