@@ -63,26 +63,15 @@ class Downloader :
 
         # Check if we're downloading from a video or a playlist
 
-        if self.format == "video" :
-
-            # Get video properties + downloads it
-            self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
-
-        elif self.format == "playlist" :
-            self.yt_playlist.download_all(self.path)
+        # Get video properties + downloads it
+        self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
 
     def download_audio(self) :
 
         # Check if we're downloading from a video or a playlist
 
-        if self.format == "video" :
-            # Get audio properties + downloads it
-            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
-
-        elif self.format == "playlist" :
-            # Get audio properties + downloads it
-            audio = self.yt_video.streams.filter(only_audio=True).first().download_all(self.path)
-
+        # Get audio properties + downloads it
+        audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
         base, ext = os.path.splitext(audio)
         new_file = base + '.mp3'
         os.rename(audio, new_file)
@@ -257,8 +246,17 @@ class Downloader :
             self.screen.fill("#000000")
             self.screen.blit(yt_01, (360, -100))
 
-            dialog = self.font.render("Enter Youtube Video ID / Press SPACE to paste a URL :", 1, WHITE)
-            self.screen.blit(dialog, (50, 340))
+            if self.format == "video" :
+                dialog = self.font.render("Enter Youtube Video ID / Press SPACE to paste a URL :", 1, WHITE)
+                self.screen.blit(dialog, (50, 340))
+
+            elif self.format == "short" :
+                dialog = self.font.render("Enter Youtube Short ID / Press SPACE to paste a URL :", 1, WHITE)
+                self.screen.blit(dialog, (50, 340))
+
+            elif self.format == "playlist" :
+                dialog = self.font.render("Enter Youtube Playlist ID / Press SPACE to paste a URL :", 1, WHITE)
+                self.screen.blit(dialog, (50, 340))
 
             self.input_box.w = (width * 2) - 100
             text = self.font.render(self.link, True, self.color)
