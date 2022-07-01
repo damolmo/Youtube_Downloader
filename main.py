@@ -14,8 +14,9 @@ os.system("pip3 install pygame")
 os.system("pip install pygame")
 #os.system("python -m pip install git+https://github.com/pytube/pytube")
 os.system("pip install pillow")
+os.system("pip install pyperclip")
 
-
+import pyperclip
 import pygame
 import wget
 import os

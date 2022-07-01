@@ -9,6 +9,7 @@ import wget
 import threading
 import os.path
 import platform
+import pyperclip
 
 vec = pygame.math.Vector2
 
@@ -40,6 +41,7 @@ class Downloader :
         self.player_three = 0
         self.path = 'downloads/'
         self.yt_video = YouTube
+        self.yt_playlist = Playlist
         self.mp4 = ''
         self.choose_format = False
         self.preview_photo =  YouTube
@@ -54,13 +56,33 @@ class Downloader :
         # Creation of youtube object
         self.yt_video = YouTube(self.link)
 
+        # Creation of Playlist object
+        self.yt_playlist = Playlist(self.link)
+
     def download_video(self) :
-        # Get video properties + downloads it
-        self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
+
+        # Check if we're downloading from a video or a playlist
+
+        if self.format == "video" :
+
+            # Get video properties + downloads it
+            self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
+
+        elif self.format == "playlist" :
+            self.yt_playlist.download_all(self.path)
 
     def download_audio(self) :
-        # Get audio properties + downloads it
-        audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
+
+        # Check if we're downloading from a video or a playlist
+
+        if self.format == "video" :
+            # Get audio properties + downloads it
+            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
+
+        elif self.format == "playlist" :
+            # Get audio properties + downloads it
+            audio = self.yt_video.streams.filter(only_audio=True).first().download_all(self.path)
+
         base, ext = os.path.splitext(audio)
         new_file = base + '.mp3'
         os.rename(audio, new_file)
@@ -190,6 +212,9 @@ class Downloader :
                     else:
                         self.link += event.unicode
 
+                    if event.key == pygame.K_SPACE :
+                        self.link = pyperclip.paste()
+
                     if event.key == pygame.K_RETURN :
                             self.link = self.link[:-1]
                             self.get_video() # Gets the video from the given url
@@ -232,7 +257,7 @@ class Downloader :
             self.screen.fill("#000000")
             self.screen.blit(yt_01, (360, -100))
 
-            dialog = self.font.render("Enter Youtube Video ID :", 1, WHITE)
+            dialog = self.font.render("Enter Youtube Video ID / Press SPACE to paste a URL :", 1, WHITE)
             self.screen.blit(dialog, (50, 340))
 
             self.input_box.w = (width * 2) - 100
