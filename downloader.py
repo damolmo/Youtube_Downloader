@@ -45,6 +45,7 @@ class Downloader :
         self.player_two = 0
         self.player_three = 0
         self.path = 'downloads/'
+        self.download_path = ''.join(('C:/Users/', os.getlogin(), '/Desktop/Youtube_Downloader'))
         self.yt_video = YouTube
         self.yt_playlist = Playlist
         self.mp4 = ''
@@ -56,6 +57,8 @@ class Downloader :
         self.downloading = False
         self.isVideo = False
         self.isAudio = False
+        self.playlist_len = 0
+        self.playlist_counter = 0
 
         self.download_video_rect = pygame.Rect(600, 400, 300, 100)
         self.download_audio_rect = pygame.Rect(940, 400, 300, 100)
@@ -66,33 +69,39 @@ class Downloader :
 
         while self.downloading :
             self.draw_download_screen(loader_01)
+            clock.tick(10)
             self.draw_download_screen(loader_02)
+            clock.tick(10)
             self.draw_download_screen(loader_03)
+            clock.tick(10)
             self.draw_download_screen(loader_04)
+            clock.tick(10)
             self.draw_download_screen(loader_05)
+            clock.tick(10)
             self.draw_download_screen(loader_06)
+            clock.tick(10)
             self.draw_download_screen(loader_07)
+            clock.tick(10)
             self.draw_download_screen(loader_08)
+            clock.tick(10)
 
     def draw_download_screen(self, loader) :
 
         self.screen.fill("#000000")
         self.screen.blit(mini_logo, (950, -50))
 
-        # Video Title
+        # Title
 
-        size = 0
-        title = ''
-
-        for char in self.video_title :
-            size += 1
-
-        
-        for char in self.video_title[0:40:1]:
-            title+=char
-
-        text = self.font.render(title, 1, self.color)
+        text = self.font.render("Youtube Downloader", 1, self.color)
         self.screen.blit(text, (50, 100))
+
+        # Description
+
+        description = small_font.render("We're currently downloading your videos from Youtube", 1, WHITE)
+        self.screen.blit(description, (50, 170))
+
+        description = small_font.render("Please, don't close the application until the download process succeed", 1, WHITE)
+        self.screen.blit(description, (50, 200))
 
 
         # Video preview
@@ -100,22 +109,40 @@ class Downloader :
         self.screen.blit(video_preview, (50, 220))
 
         # Download loader
-        if self.previousprogress < 100 :
+        if self.previousprogress < 100 and self.playlist_len == 0 :
             self.screen.blit(loader, (800, 300))
 
-        # Download progress
-        if self.previousprogress < 100 :
-            percentage = small_font.render("Downloading... " + str(self.previousprogress) + "%", 1, WHITE)
-            self.screen.blit(percentage, (750, 450))
+        if self.previousprogress < 100 and self.playlist_len > 0 :
+            if self.playlist_counter < self.playlist_len :
+                self.screen.blit(loader, (800, 300))
 
-        if self.previousprogress == 100 :
+        # Download progress
+        if self.previousprogress < 100 and self.playlist_len == 0 :
+            percentage = small_font.render("Downloading... ", 1, WHITE)
+            self.screen.blit(percentage, (780, 450))
+            percentage = small_font.render(str(self.previousprogress) + "%", 1, WHITE)
+            self.screen.blit(percentage, (835, 480))
+
+        if self.previousprogress < 100 and self.playlist_len > 0 :
+            if self.playlist_counter < self.playlist_len :
+                percentage = small_font.render("Downloading... " , 1, WHITE)
+                self.screen.blit(percentage, (780, 450))
+                percentage = small_font.render(str(self.playlist_counter + 1) + "/" + str(self.playlist_len) , 1, WHITE)
+                self.screen.blit(percentage, (835, 480))
+
+        if self.previousprogress == 100 and self.playlist_len == 0  :
             percentage = small_font.render("Your download is completed!", 1, WHITE)
             self.screen.blit(percentage, (750, 450))
+
+        if self.previousprogress < 100 and self.playlist_len > 0 :
+            if self.playlist_counter == self.playlist_len :
+                percentage = small_font.render("Your download is completed!", 1, WHITE)
+                self.screen.blit(percentage, (750, 450))
+
 
         pygame.display.update()
 
         
-
 
     def download_progress(self, stream, chunk, bytes_remaining):
 
@@ -174,12 +201,13 @@ class Downloader :
 
         if self.format == "video" or self.format == "short" :
             # Get video properties + downloads it
-            self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.path)
+            self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.download_path)
 
         else :
-            print("okay")
+            self.playlist_len = len(self.yt_playlist.videos)
             for video in self.yt_playlist.videos:
-                video.streams.first().download(self.path)
+                video.streams.first().download(self.download_path)
+                self.playlist_counter +=1
 
     def download_audio(self) :
 
@@ -189,17 +217,19 @@ class Downloader :
 
         if self.format == "video" or self.format == "short" :
             # Get audio properties + downloads it
-            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.path)
+            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.download_path)
             base, ext = os.path.splitext(audio)
             new_file = base + '.mp3'
             os.rename(audio, new_file)
 
         else :
+            self.playlist_len = len(self.yt_playlist.videos)
             for mp3 in self.yt_playlist.videos :
-                audio = mp3.streams.filter(only_audio=True).first().download(self.path)
+                audio = mp3.streams.filter(only_audio=True).first().download(self.download_path)
                 base, ext = os.path.splitext(audio)
                 new_file = base + '.mp3'
                 os.rename(audio, new_file)
+                self.playlist_counter +=1
 
     def get_video_title(self) :
         # Get the title from the current video
@@ -394,13 +424,21 @@ class Downloader :
 
         while self.downloading :
             self.draw_loading_screen(loader_01)
+            clock.tick(10)
             self.draw_loading_screen(loader_02)
+            clock.tick(10)
             self.draw_loading_screen(loader_03)
+            clock.tick(10)
             self.draw_loading_screen(loader_04)
+            clock.tick(10)
             self.draw_loading_screen(loader_05)
+            clock.tick(10)
             self.draw_loading_screen(loader_06)
+            clock.tick(10)
             self.draw_loading_screen(loader_07)
+            clock.tick(10)
             self.draw_loading_screen(loader_08)
+            clock.tick(10)
 
     def img_exists(self) :
         exists = False
