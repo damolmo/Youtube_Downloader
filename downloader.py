@@ -199,12 +199,12 @@ class Downloader :
 
         if self.format == "video" or self.format == "short" :
             # Get video properties + downloads it
-            self.yt_video.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(self.download_path)
+            self.yt_video.streams.filter(progressive=True, file_extension='mp4').get_highest_resolution().download(self.download_path)
 
         else :
             self.playlist_len = len(self.yt_playlist.videos)
             for video in self.yt_playlist.videos:
-                video.streams.first().download(self.download_path)
+                video.streams.first().get_highest_resolution().download(self.download_path)
                 self.playlist_counter +=1
 
     def download_audio(self) :
