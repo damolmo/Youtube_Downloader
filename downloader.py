@@ -4,8 +4,6 @@ from pytube import YouTube
 from pytube import Playlist
 from pytube.cli import on_progress
 import urllib.request
-from io import BytesIO
-from PIL import Image, ImageTk
 import wget
 import threading
 import os.path

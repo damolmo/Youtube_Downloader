@@ -18,6 +18,7 @@ os.system("pip install pyperclip")
 
 import pyperclip
 import pygame
+import tkinter
 import wget
 import os
 import json
@@ -29,6 +30,12 @@ from datetime import datetime
 from pathlib import Path
 import pytube
 from pytube import YouTube
+from pytube import Playlist
+from pytube.cli import on_progress
+import urllib.request
+import platform
+import pyperclip
+from os.path import exists
 
 pygame.font.init() # Import font
 pygame.mixer.init() # Import sounds
