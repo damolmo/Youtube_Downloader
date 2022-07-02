@@ -204,7 +204,7 @@ class Downloader :
         else :
             self.playlist_len = len(self.yt_playlist.videos)
             for video in self.yt_playlist.videos:
-                video.streams.first().get_highest_resolution().download(self.download_path)
+                video.streams.first().download(self.download_path)
                 self.playlist_counter +=1
 
     def download_audio(self) :
