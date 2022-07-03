@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Youtube Downloader"
-#define MyAppVersion "1.0"
+#define MyAppVersion "2.0"
 #define MyAppPublisher "daviiid99"
 #define MyAppURL "https://github.com/daviiid99"
 #define MyAppExeName "Youtube Downloader.exe"

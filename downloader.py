@@ -57,9 +57,24 @@ class Downloader :
         self.isAudio = False
         self.playlist_len = 0
         self.playlist_counter = 0
+        self.resolutions_array = []
 
         self.download_video_rect = pygame.Rect(600, 400, 300, 100)
         self.download_audio_rect = pygame.Rect(940, 400, 300, 100)
+
+        self.r144p_rect = pygame.Rect(650, 450, 100, 50)
+        self.r240p_rect = pygame.Rect(770, 450, 100, 50)
+        self.r360p_rect = pygame.Rect(890, 450, 100, 50)
+        self.r480p_rect = pygame.Rect(1010, 450, 100, 50)
+        self.r720p_rect = pygame.Rect(1130, 450, 100, 50)
+        self.r1080p_rect = pygame.Rect(650, 530, 100, 50)
+        self.r1440p_rect = pygame.Rect(770, 530, 100, 50)
+        self.r2160p_rect = pygame.Rect(890, 530, 100, 50)
+        self.r4320p_rect = pygame.Rect(1010, 530, 100, 50)
+
+        self.choose_video_resolution = False
+
+        self.video_res = "0p"
 
         self.previousprogress = 0
 
@@ -82,6 +97,172 @@ class Downloader :
             clock.tick(10)
             self.draw_download_screen(loader_08)
             clock.tick(10)
+
+    def draw_resolutions_screen(self) :
+
+        while self.choose_video_resolution :
+
+
+            self.screen.fill("#000000")
+            self.screen.blit(mini_logo, (950, -50))
+
+            # Video Title
+
+            size = 0
+            title = ''
+
+            for char in self.video_title :
+                size += 1
+
+            
+            for char in self.video_title[0:40:1]:
+                title+=char
+
+            text = self.font.render(title, 1, self.color)
+            self.screen.blit(text, (50, 100))
+
+
+
+            # Video Description
+            # Total size of the yt video description
+            max_size = 0
+
+            for char in self.description :
+                max_size +=1
+            
+            # Show description on display
+
+            phrase = ''
+            start = 0
+            end = 85
+            height = 170
+            max_length = 0
+
+            while max_size >= 85 and max_length < 340 :
+
+                for char in self.description[start:end:1] :
+                    phrase += char
+
+                phrase.replace("\n", '')
+                description = small_font.render(phrase, 1, WHITE)
+                self.screen.blit(description, (50, height))
+
+                phrase = ''
+                max_size -=85
+                max_length +=85
+                start += 85
+                end += 85
+                height +=30
+
+
+            # Video preview
+            video_preview = pygame.transform.scale(pygame.image.load(os.path.join('downloads/img.jpg')), (500, 380))
+            self.screen.blit(video_preview, (50, 280))
+
+            # Title
+            res_title = small_font.render("Choose one of the following resolutions", 1, WHITE)
+            self.screen.blit(res_title, (650, 350))
+
+            # Resolution buttons
+            # [144, 240, 360, 480, 720, 1080, 1440, 2160, 4320 ] # All possible resolutions at this moment
+
+            for resolution in self.resolutions_array :
+                if 144 in self.resolutions_array :
+                    r144p_button = pygame.image.load(os.path.join('Assets/buttons/144p.png'))
+                    self.screen.blit(r144p_button, (self.r144p_rect.x, self.r144p_rect.y))
+
+                if 240 in self.resolutions_array :
+                    r240p_button = pygame.image.load(os.path.join('Assets/buttons/240p.png'))
+                    self.screen.blit(r240p_button, (self.r240p_rect.x, self.r240p_rect.y))
+
+                if 360 in self.resolutions_array :
+                    r360p_button = pygame.image.load(os.path.join('Assets/buttons/360p.png'))
+                    self.screen.blit(r360p_button, (self.r360p_rect.x, self.r360p_rect.y))
+
+                if 480 in self.resolutions_array :
+                    r480p_button = pygame.image.load(os.path.join('Assets/buttons/480p.png'))
+                    self.screen.blit(r480p_button, (self.r480p_rect.x, self.r480p_rect.y))
+
+                if 720 in self.resolutions_array :
+                    r720p_button = pygame.image.load(os.path.join('Assets/buttons/720p.png'))
+                    self.screen.blit(r720p_button, (self.r720p_rect.x, self.r720p_rect.y))
+
+                if 1080 in self.resolutions_array :
+                    r1080p_button = pygame.image.load(os.path.join('Assets/buttons/1080p.png'))
+                    self.screen.blit(r1080p_button, (self.r1080p_rect.x, self.r1080p_rect.y))
+
+                if 1440 in self.resolutions_array :
+                    r1440p_button = pygame.image.load(os.path.join('Assets/buttons/1440p.png'))
+                    self.screen.blit(r1440p_button, (self.r1440p_rect.x, self.r1440p_rect.y))
+
+                if 2160 in self.resolutions_array :
+                    r2160p_button = pygame.image.load(os.path.join('Assets/buttons/2160p.png'))
+                    self.screen.blit(r2160p_button, (self.r2160p_rect.x, self.r2160p_rect.y))
+
+                if 4320 in self.resolutions_array :
+                    r4320p_button = pygame.image.load(os.path.join('Assets/buttons/4320p.png'))
+                    self.screen.blit(r4320p_button, (self.r4320p_rect.x, self.r4320p_rect.y))
+
+            pygame.display.update()
+
+    def resolution_controller(self) :
+
+       while self.choose_video_resolution :
+
+            for event in pygame.event.get() :
+                # Closes the game
+                if event.type == pygame.QUIT:
+                    self.downloader = 0
+                    self.downloading = False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.check_click_res(event.pos)
+
+    def check_click_res(self, mouse) :
+        if self.r144p_rect.collidepoint(mouse) :
+            self.video_res = "144p"
+            self.downloading = True
+
+        elif self.r240p_rect.collidepoint(mouse) :
+            self.video_res = "240p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r360p_rect.collidepoint(mouse) :
+            self.video_res = "360p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r480p_rect.collidepoint(mouse) :
+            self.video_res = "480p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r720p_rect.collidepoint(mouse) :
+            self.video_res = "720p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r1080p_rect.collidepoint(mouse) :
+            self.video_res = "1080p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r1440p_rect.collidepoint(mouse) :
+            self.video_res = "1440p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r2160p_rect.collidepoint(mouse) :
+            self.video_res = "2160p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
+        elif self.r4320p_rect.collidepoint(mouse) :
+            self.video_res = "4320p"
+            self.downloading = True
+            self.choose_video_resolution = False
+
 
     def draw_download_screen(self, loader) :
 
@@ -193,18 +374,26 @@ class Downloader :
         # Creation of Playlist object
         self.yt_playlist = Playlist(self.link)
 
+    def get_video_resolution(self) :
+        # Get an array with the current video resolutions
+        resolution =[int(i.split("p")[0]) for i in (list(dict.fromkeys([i.resolution for i in self.yt_video.streams if i.resolution])))]
+
+        # Save it into an array
+        self.resolutions_array = resolution
+
     def download_video(self) :
 
         # Check if we're downloading from a video or a playlist
 
         if self.format == "video" or self.format == "short" :
+
             # Get video properties + downloads it
-            self.yt_video.streams.filter(progressive=True, file_extension='mp4').get_highest_resolution().download(self.download_path)
+            self.yt_video.streams.filter(res=self.video_res).first().download(self.download_path)
 
         else :
             self.playlist_len = len(self.yt_playlist.videos)
             for video in self.yt_playlist.videos:
-                video.streams.first().download(self.download_path)
+                video.streams.filter(res=self.video_res).first().download(self.download_path)
                 self.playlist_counter +=1
 
     def download_audio(self) :
@@ -384,7 +573,8 @@ class Downloader :
         if self.download_video_rect.collidepoint(mouse) :
             self.choose_format = False
             self.isVideo = True
-            self.downloading = True
+            self.choose_video_resolution = True
+            self.get_video_resolution()
             
         elif self.download_audio_rect.collidepoint(mouse) :
             self.choose_format = False
@@ -557,6 +747,23 @@ class Downloader :
         start = self.preview_controller()
 
         while self.choose_format :
+            thread_1.join()
+            thread_2.join()
+            thread_3.join()
+
+        # Create three new threads
+        thread_1 = threading.Thread(target = self.draw_resolutions_screen, name ="mouse")
+        thread_2 = threading.Thread(target = self.resolution_controller, name="ui")
+        thread_3 = threading.Thread(target = self.update_mouse_position, name="ui", args=([delta_time]))
+
+        # Start Both Threads
+        thread_1.start()
+        thread_2.start()
+        thread_3.start()
+
+        start = self.resolution_controller()
+
+        while self.choose_video_resolution :
             thread_1.join()
             thread_2.join()
             thread_3.join()
