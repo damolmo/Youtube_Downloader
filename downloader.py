@@ -323,7 +323,7 @@ class Downloader :
 
 
         if self.processing :
-            self.screen.blit(loader, (790, 300))
+            self.screen.blit(loader, (800, 300))
             percentage = small_font.render("Processing... " , 1, WHITE)
             self.screen.blit(percentage, (780, 450))
 
