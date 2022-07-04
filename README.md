@@ -11,7 +11,8 @@ Youtube Downloader made with Python, pygame framework and pytube library
 <img src="screens/screen_2.png">
 <img src="screens/screen_3.png">
 <img src="screens/screen_4.png">
-
+<img src="screens/screen_5.png">
+<img src="screens/screen_6.png">
 <br/>
 
 

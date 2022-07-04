@@ -78,6 +78,14 @@ class Downloader :
 
         self.previousprogress = 0
 
+        self.high_res = False
+
+        self.count = 0
+
+        self.processing = False
+
+        self.home_button_rect = pygame.Rect(800, 300, 200, 200)
+
     def draw_progress(self) :
 
         while self.downloading :
@@ -247,21 +255,25 @@ class Downloader :
             self.video_res = "1080p"
             self.downloading = True
             self.choose_video_resolution = False
+            self.high_res = True
 
         elif self.r1440p_rect.collidepoint(mouse) :
             self.video_res = "1440p"
             self.downloading = True
             self.choose_video_resolution = False
+            self.high_res = True
 
         elif self.r2160p_rect.collidepoint(mouse) :
             self.video_res = "2160p"
             self.downloading = True
             self.choose_video_resolution = False
+            self.high_res = True
 
         elif self.r4320p_rect.collidepoint(mouse) :
             self.video_res = "4320p"
             self.downloading = True
             self.choose_video_resolution = False
+            self.high_res = True
 
 
     def draw_download_screen(self, loader) :
@@ -302,22 +314,30 @@ class Downloader :
             percentage = small_font.render(str(self.previousprogress) + "%", 1, WHITE)
             self.screen.blit(percentage, (835, 480))
 
-        if self.previousprogress < 100 and self.playlist_len > 0 :
+        if self.previousprogress < 100 and self.playlist_len > 0 and not self.processing :
             if self.playlist_counter < self.playlist_len :
                 percentage = small_font.render("Downloading... " , 1, WHITE)
                 self.screen.blit(percentage, (780, 450))
-                percentage = small_font.render(str(self.playlist_counter + 1) + "/" + str(self.playlist_len) , 1, WHITE)
+                percentage = small_font.render("[" + str(self.playlist_counter + 1) + "/" + str(self.playlist_len) + "]" , 1, WHITE)
                 self.screen.blit(percentage, (835, 480))
 
-        if self.previousprogress == 100 and self.playlist_len == 0  :
+
+        if self.processing :
+            self.screen.blit(loader, (800, 300))
+            percentage = small_font.render("Processing... " , 1, WHITE)
+            self.screen.blit(percentage, (780, 450))
+
+
+        if self.previousprogress == 100 and self.playlist_len == 0 :
+            self.screen.blit(home_button, (820, 280))
             percentage = small_font.render("Your download is completed!", 1, WHITE)
             self.screen.blit(percentage, (750, 450))
 
-        if self.previousprogress < 100 and self.playlist_len > 0 :
+        if self.previousprogress < 100 and self.playlist_len > 0:
             if self.playlist_counter == self.playlist_len :
+                self.screen.blit(home_button, (820, 280))
                 percentage = small_font.render("Your download is completed!", 1, WHITE)
                 self.screen.blit(percentage, (750, 450))
-
 
         pygame.display.update()
 
@@ -336,6 +356,10 @@ class Downloader :
             self.previousprogress = liveprogress
             print(liveprogress)
 
+    def check_click_download(self, mouse) :
+        if self.home_button_rect.collidepoint(mouse) :
+            self.downloading = False
+            self.downloader = 0
 
     def download_controller(self) :
 
@@ -348,7 +372,7 @@ class Downloader :
                     self.downloading = False
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.check_click(event.pos)
+                    self.check_click_download(event.pos)
 
     def loading_controller(self) :
 
@@ -386,15 +410,122 @@ class Downloader :
         # Check if we're downloading from a video or a playlist
 
         if self.format == "video" or self.format == "short" :
+            if self.video_res == "1080p" or self.video_res == "1440p" or self.video_res == "2160p" or self.video_res == "4320p" :
+                self.download_video_high_res()
+                self.high_res = False
 
-            # Get video properties + downloads it
-            self.yt_video.streams.filter(res=self.video_res).first().download(self.download_path)
+            else :
+                # Get video properties + downloads it
+                self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
 
         else :
             self.playlist_len = len(self.yt_playlist.videos)
             for video in self.yt_playlist.videos:
-                video.streams.filter(res=self.video_res).first().download(self.download_path)
-                self.playlist_counter +=1
+                if self.video_res == "1080p" or self.video_res == "1440p" or self.video_res == "2160p" or self.video_res == "4320p" :
+                    self.download_playlist_high_res(video)
+                    self.playlist_counter +=1
+
+                else :
+                    video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+                    self.playlist_counter +=1
+
+    def download_playlist_high_res(self, current_video) :
+
+        # This means youtube is not including audio and video in the same file
+        # It's a known issue with adapatative youtube streaming
+        # We'll download both, audio and video and use ffmpeg to have a final video file
+
+        # Download the video as video.mp4
+        video = current_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
+        base, ext = os.path.splitext(video)
+        os.rename(video, 'video.mp4')
+        self.count +=1
+
+        # Download the audio as audio.mp3
+        audio = current_video.streams.filter(only_audio=True).first().download()
+        base, ext = os.path.splitext(audio)
+        os.rename(audio, 'audio.mp3')
+        self.count +=1
+
+        # Combine both files into a single file
+        self.processing = True
+        base_name = current_video.title
+        base_name = base_name.replace(" ", "_")
+        base_name = base_name.replace("-", "_")
+        base_name = base_name.replace("ñ", "n")
+        base_name = base_name.replace("&", "and")
+        base_name = base_name.replace('"', '')
+        base_name = base_name.replace("á", "a")
+        base_name = base_name.replace("à", "a")
+        base_name = base_name.replace("é", "e")
+        base_name = base_name.replace("í", "i")
+        base_name = base_name.replace("ó", "o")
+        base_name = base_name.replace("ú", "u")
+        base_name = base_name.replace("!", "")
+        base_name = base_name.replace("¡", "")
+        base_name = base_name.replace("¿", "")
+        base_name = base_name.replace("?", "")
+        os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
+        os.rename("output.mp4", base_name + '.mp4')
+
+        # Move the final file to user' downloads dir
+        os.system("move %s.mp4 %s" % (base_name, self.download_path))
+
+        # Delete temp files
+        os.system("del /f audio.mp3")
+        os.system("del /f video.mp4")
+        os.system("del /f output.mp4")
+
+        self.processing = False
+
+    def download_video_high_res(self) :
+
+        # This means youtube is not including audio and video in the same file
+        # It's a known issue with adapatative youtube streaming
+        # We'll download both, audio and video and use ffmpeg to have a final video file
+
+        # Download the video as video.mp4
+        video = self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
+        base, ext = os.path.splitext(video)
+        os.rename(video, 'video.mp4')
+        self.count +=1
+
+        # Download the audio as audio.mp3
+        audio = self.yt_video.streams.filter(only_audio=True).first().download()
+        base, ext = os.path.splitext(audio)
+        os.rename(audio, 'audio.mp3')
+        self.count +=1
+
+        # Combine both files into a single file
+        self.processing = True
+        base_name = self.video_title.replace(" ", "_")
+        base_name = base_name.replace("-", "_")
+        base_name = base_name.replace("ñ", "n")
+        base_name = base_name.replace("&", "and")
+        base_name = base_name.replace('"', '')
+        base_name = base_name.replace("á", "a")
+        base_name = base_name.replace("à", "a")
+        base_name = base_name.replace("é", "e")
+        base_name = base_name.replace("í", "i")
+        base_name = base_name.replace("ó", "o")
+        base_name = base_name.replace("ú", "u")
+        base_name = base_name.replace("!", "")
+        base_name = base_name.replace("¡", "")
+        base_name = base_name.replace("¿", "")
+        base_name = base_name.replace("?", "")
+        os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
+        os.rename("output.mp4", base_name + '.mp4')
+
+        # Move the final file to user' downloads dir
+        os.system("move %s.mp4 %s" % (base_name, self.download_path))
+
+        # Delete temp files
+        os.system("del /f audio.mp3")
+        os.system("del /f video.mp4")
+        os.system("del /f output.mp4")
+
+        self.processing = False
+
 
     def download_audio(self) :
 
@@ -406,7 +537,7 @@ class Downloader :
             # Get audio properties + downloads it
             audio = self.yt_video.streams.filter(only_audio=True).first().download(self.download_path)
             base, ext = os.path.splitext(audio)
-            new_file = base + '.mp3'
+            new_file = base + '_audio' + '.mp3'
             os.rename(audio, new_file)
 
         else :
@@ -414,7 +545,7 @@ class Downloader :
             for mp3 in self.yt_playlist.videos :
                 audio = mp3.streams.filter(only_audio=True).first().download(self.download_path)
                 base, ext = os.path.splitext(audio)
-                new_file = base + '.mp3'
+                new_file = base + '_audio' + '.mp3'
                 os.rename(audio, new_file)
                 self.playlist_counter +=1
 
@@ -525,6 +656,7 @@ class Downloader :
                 if event.type == pygame.QUIT:
                     self.downloader = 0
                     self.running = False
+                    pygame.quit()
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.input_box.collidepoint(event.pos):
@@ -793,4 +925,3 @@ class Downloader :
             thread_2.join()
             thread_3.join()
 
-        pygame.quit()

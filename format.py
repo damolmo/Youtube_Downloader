@@ -56,6 +56,7 @@ class Format :
                 if event.type == pygame.QUIT:
                     self.downloader = 0
                     self.choosing_format = False
+                    pygame.quit()
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.check_click(event.pos)
@@ -109,6 +110,10 @@ class Format :
 
             # Go to the next view
             downloader.start_app(self.format)
+            self.choosing_format = True
+            self.start_choosing_format()
+
+        pygame.quit()
 
 
 
