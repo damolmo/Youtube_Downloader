@@ -323,7 +323,7 @@ class Downloader :
 
 
         if self.processing :
-            self.screen.blit(loader, (800, 300))
+            self.screen.blit(loader, (790, 300))
             percentage = small_font.render("Processing... " , 1, WHITE)
             self.screen.blit(percentage, (780, 450))
 
@@ -465,6 +465,7 @@ class Downloader :
         base_name = base_name.replace("¡", "")
         base_name = base_name.replace("¿", "")
         base_name = base_name.replace("?", "")
+        base_name = base_name.replace(":", "_")
         os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
         os.rename("output.mp4", base_name + '.mp4')
 
