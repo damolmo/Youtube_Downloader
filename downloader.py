@@ -435,6 +435,11 @@ class Downloader :
         # It's a known issue with adapatative youtube streaming
         # We'll download both, audio and video and use ffmpeg to have a final video file
 
+        # Delete previous temp files if exists
+        os.system("del /f audio.mp3")
+        os.system("del /f video.mp4")
+        os.system("del /f output.mp4")
+
         # Download the video as video.mp4
         video = current_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
         base, ext = os.path.splitext(video)
