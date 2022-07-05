@@ -38,7 +38,7 @@ class Downloader :
         self.input_box = pygame.Rect(50, 400, 600, 100)
         self.active = False
         self.downloader = 1
-        self.link = 'https://www.youtube.com/watch?v='
+        self.link = 'Enter your URL'
         self.player_one = 0
         self.player_two = 0
         self.player_three = 0
@@ -85,6 +85,10 @@ class Downloader :
         self.processing = False
 
         self.home_button_rect = pygame.Rect(800, 300, 200, 200)
+
+        self.bad_url = False
+
+        self.bad_resolution = False
 
     def draw_progress(self) :
 
@@ -300,27 +304,26 @@ class Downloader :
         self.screen.blit(video_preview, (50, 220))
 
         # Download loader
-        if self.previousprogress < 100 and self.playlist_len == 0 :
+        if self.previousprogress < 100 and self.playlist_len == 0 and not self.processing and not self.bad_url and not self.bad_resolution  :
             self.screen.blit(loader, (800, 300))
 
-        if self.previousprogress < 100 and self.playlist_len > 0 :
+        if self.previousprogress < 100 and self.playlist_len > 0 and not self.processing and not self.bad_url and not self.bad_resolution  :
             if self.playlist_counter < self.playlist_len :
                 self.screen.blit(loader, (800, 300))
 
         # Download progress
-        if self.previousprogress < 100 and self.playlist_len == 0 :
+        if self.previousprogress < 100 and self.playlist_len == 0 and not self.bad_url and not self.bad_resolution :
             percentage = small_font.render("Downloading... ", 1, WHITE)
             self.screen.blit(percentage, (780, 450))
             percentage = small_font.render(str(self.previousprogress) + "%", 1, WHITE)
             self.screen.blit(percentage, (835, 480))
 
-        if self.previousprogress < 100 and self.playlist_len > 0 and not self.processing :
+        if self.previousprogress < 100 and self.playlist_len > 0 and not self.processing and not self.bad_url and not self.bad_resolution :
             if self.playlist_counter < self.playlist_len :
                 percentage = small_font.render("Downloading... " , 1, WHITE)
                 self.screen.blit(percentage, (780, 450))
                 percentage = small_font.render("[" + str(self.playlist_counter + 1) + "/" + str(self.playlist_len) + "]" , 1, WHITE)
-                self.screen.blit(percentage, (835, 480))
-
+                self.screen.blit(percentage, (825, 480))
 
         if self.processing :
             self.screen.blit(loader, (800, 300))
@@ -328,16 +331,23 @@ class Downloader :
             self.screen.blit(percentage, (780, 450))
 
 
-        if self.previousprogress == 100 and self.playlist_len == 0 :
-            self.screen.blit(home_button, (820, 280))
+        if self.previousprogress == 100 and self.playlist_len == 0 and not self.processing :
+            self.screen.blit(home_button, (850, 350))
             percentage = small_font.render("Your download is completed!", 1, WHITE)
+            self.screen.blit(percentage, (750, 480))
+
+        if self.previousprogress < 100 and self.playlist_len > 0 and not self.processing:
+            if self.playlist_counter == self.playlist_len :
+                self.screen.blit(home_button, (850, 350))
+                percentage = small_font.render("Your download is completed!", 1, WHITE)
+                self.screen.blit(percentage, (750, 480))
+
+        if self.bad_url :
+            self.screen.blit(home_button, (820, 280))
+            percentage = small_font.render("Bad URL/res, try again..", 1, WHITE)
             self.screen.blit(percentage, (750, 450))
 
-        if self.previousprogress < 100 and self.playlist_len > 0:
-            if self.playlist_counter == self.playlist_len :
-                self.screen.blit(home_button, (820, 280))
-                percentage = small_font.render("Your download is completed!", 1, WHITE)
-                self.screen.blit(percentage, (750, 450))
+
 
         pygame.display.update()
 
@@ -416,7 +426,11 @@ class Downloader :
 
             else :
                 # Get video properties + downloads it
-                self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+                try :
+                    self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+
+                except (AttributeError, KeyError) as error :
+                    self.bad_url = True
 
         else :
             self.playlist_len = len(self.yt_playlist.videos)
@@ -426,8 +440,12 @@ class Downloader :
                     self.playlist_counter +=1
 
                 else :
-                    video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
-                    self.playlist_counter +=1
+                    try :
+                        self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+                        self.playlist_counter +=1
+
+                    except (AttributeError, KeyError) as error :
+                        self.bad_url = True
 
     def download_playlist_high_res(self, current_video) :
 
@@ -441,10 +459,14 @@ class Downloader :
         os.system("del /f output.mp4")
 
         # Download the video as video.mp4
-        video = current_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
-        base, ext = os.path.splitext(video)
-        os.rename(video, 'video.mp4')
-        self.count +=1
+        try :
+            video = current_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
+            base, ext = os.path.splitext(video)
+            os.rename(video, 'video.mp4')
+            self.count +=1
+
+        except (AttributeError, KeyError) as error :
+            self.bad_url = True
 
         # Download the audio as audio.mp3
         audio = current_video.streams.filter(only_audio=True).first().download()
@@ -454,23 +476,39 @@ class Downloader :
 
         # Combine both files into a single file
         self.processing = True
-        base_name = current_video.title
-        base_name = base_name.replace(" ", "_")
-        base_name = base_name.replace("-", "_")
-        base_name = base_name.replace("ñ", "n")
-        base_name = base_name.replace("&", "and")
-        base_name = base_name.replace('"', '')
-        base_name = base_name.replace("á", "a")
-        base_name = base_name.replace("à", "a")
-        base_name = base_name.replace("é", "e")
-        base_name = base_name.replace("í", "i")
-        base_name = base_name.replace("ó", "o")
-        base_name = base_name.replace("ú", "u")
-        base_name = base_name.replace("!", "")
-        base_name = base_name.replace("¡", "")
-        base_name = base_name.replace("¿", "")
-        base_name = base_name.replace("?", "")
-        base_name = base_name.replace(":", "_")
+        base_name = current_video.title.translate(str.maketrans({
+        '-' : '_', 
+        'ñ' : 'n', 
+        '&' : 'and', 
+        'á' : 'a', 
+        'é' : 'e', 
+        'í' : 'i', 
+        'ó' : 'o', 
+        'ú' : 'u',
+        '!' : '',
+        '¡' : '',
+        '¿' : '',
+        '?' : '',
+        ':' : '',
+        '|' : '',
+        ',' : '',
+        ';' : '',
+        '(' : '',
+        ')' : '',
+        '[' : '',
+        ']' : '',
+        '=' : '',
+        '@' : '',
+        '~' : '',
+        '/' : '',
+        '%' : '',
+        '"' : '',
+        '$' : '',
+        '.' : '',
+        ' ' : '_'
+
+        }))
+
         os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
         os.rename("output.mp4", base_name + '.mp4')
 
@@ -490,11 +528,21 @@ class Downloader :
         # It's a known issue with adapatative youtube streaming
         # We'll download both, audio and video and use ffmpeg to have a final video file
 
+        # Delete previous temp files if exists
+        os.system("del /f audio.mp3")
+        os.system("del /f video.mp4")
+        os.system("del /f output.mp4")
+
         # Download the video as video.mp4
-        video = self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
-        base, ext = os.path.splitext(video)
-        os.rename(video, 'video.mp4')
-        self.count +=1
+        # Download the video as video.mp4
+        try :
+            video = self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download()
+            base, ext = os.path.splitext(video)
+            os.rename(video, 'video.mp4')
+            self.count +=1
+
+        except (AttributeError, KeyError) as error :
+            self.bad_url = True
 
         # Download the audio as audio.mp3
         audio = self.yt_video.streams.filter(only_audio=True).first().download()
@@ -504,21 +552,39 @@ class Downloader :
 
         # Combine both files into a single file
         self.processing = True
-        base_name = self.video_title.replace(" ", "_")
-        base_name = base_name.replace("-", "_")
-        base_name = base_name.replace("ñ", "n")
-        base_name = base_name.replace("&", "and")
-        base_name = base_name.replace('"', '')
-        base_name = base_name.replace("á", "a")
-        base_name = base_name.replace("à", "a")
-        base_name = base_name.replace("é", "e")
-        base_name = base_name.replace("í", "i")
-        base_name = base_name.replace("ó", "o")
-        base_name = base_name.replace("ú", "u")
-        base_name = base_name.replace("!", "")
-        base_name = base_name.replace("¡", "")
-        base_name = base_name.replace("¿", "")
-        base_name = base_name.replace("?", "")
+        base_name = self.video_title.translate(str.maketrans({
+        '-' : '_', 
+        'ñ' : 'n', 
+        '&' : 'and', 
+        'á' : 'a', 
+        'é' : 'e', 
+        'í' : 'i', 
+        'ó' : 'o', 
+        'ú' : 'u',
+        '!' : '',
+        '¡' : '',
+        '¿' : '',
+        '?' : '',
+        ':' : '',
+        '|' : '',
+        ',' : '',
+        ';' : '',
+        '(' : '',
+        ')' : '',
+        '[' : '',
+        ']' : '',
+        '=' : '',
+        '@' : '',
+        '~' : '',
+        '/' : '',
+        '%' : '',
+        '"' : '',
+        '$' : '',
+        '.' : '',
+        ' ' : '_'
+
+        }))
+
         os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
         os.rename("output.mp4", base_name + '.mp4')
 
@@ -678,7 +744,7 @@ class Downloader :
                     else:
                         self.link += event.unicode
 
-                    if event.key == pygame.K_SPACE :
+                    if (event.key == pygame.K_v) and (event.mod & pygame.KMOD_CTRL):
                         self.link = pyperclip.paste()
 
                     if event.key == pygame.K_RETURN :
@@ -726,15 +792,15 @@ class Downloader :
             self.screen.blit(yt_01, (360, -100))
 
             if self.format == "video" :
-                dialog = self.font.render("Enter Youtube Video ID / Press SPACE to paste a URL :", 1, WHITE)
+                dialog = self.font.render("Press (Ctrl + V) to paste a Youtube Video URL :", 1, WHITE)
                 self.screen.blit(dialog, (50, 340))
 
             elif self.format == "short" :
-                dialog = self.font.render("Enter Youtube Short ID / Press SPACE to paste a URL :", 1, WHITE)
+                dialog = self.font.render("Press (Ctrl + V) to paste a Youtube Short URL :", 1, WHITE)
                 self.screen.blit(dialog, (50, 340))
 
             elif self.format == "playlist" :
-                dialog = self.font.render("Enter Youtube Playlist ID / Press SPACE to paste a URL :", 1, WHITE)
+                dialog = self.font.render("Press (Ctrl + V) to paste a Youtube Playlist URL :", 1, WHITE)
                 self.screen.blit(dialog, (50, 340))
 
             self.input_box.w = (width * 2) - 100
@@ -786,12 +852,12 @@ class Downloader :
 
         # Download loader
         if self.downloading  :
-            self.screen.blit(loader, (550, 300))
+            self.screen.blit(loader, (550, 330))
 
         # Download progress
         if self.downloading  :
             percentage = small_font.render("Downloading Youtube Data, please wait...", 1, WHITE)
-            self.screen.blit(percentage, (400, 450))
+            self.screen.blit(percentage, (400, 550))
 
         pygame.display.update()
 
@@ -812,25 +878,11 @@ class Downloader :
         self.get_description()
         self.get_video_preview() # Get the required video data
 
-    def assign_format(self) :
-
-        if self.format == "video" :
-            self.link  = 'https://www.youtube.com/watch?v='
-
-        elif self.format == "short" :
-            self.link = 'https://www.youtube.com/shorts/'
-
-        elif self.format == "playlist" :
-            self.link = 'https://www.youtube.com/watch?v='
-
 
     def start_app (self, formato) :
 
         self.format = formato
         delta_time = self.clock.tick() / 1000
-
-        # Assign format
-        self.assign_format()
 
         # Create three new threads
         thread_1 = threading.Thread(target = self.player_control, name ="mouse")
