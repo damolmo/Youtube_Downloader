@@ -73,22 +73,18 @@ class Downloader :
         self.r4320p_rect = pygame.Rect(1010, 530, 100, 50)
 
         self.choose_video_resolution = False
-
         self.video_res = "0p"
-
         self.previousprogress = 0
-
         self.high_res = False
-
         self.count = 0
-
         self.processing = False
 
         self.home_button_rect = pygame.Rect(800, 300, 200, 200)
 
         self.bad_url = False
-
         self.bad_resolution = False
+
+        self.playlist_path = ''
 
     def draw_progress(self) :
 
@@ -434,20 +430,21 @@ class Downloader :
 
         else :
             self.playlist_len = len(self.yt_playlist.videos)
+            self.playlist_path = self.download_path + '/' + self.yt_playlist.title
             for video in self.yt_playlist.videos:
                 if self.video_res == "1080p" or self.video_res == "1440p" or self.video_res == "2160p" or self.video_res == "4320p" :
-                    self.download_playlist_high_res(video)
+                    self.download_playlist_high_res(video, self.playlist_path)
                     self.playlist_counter +=1
 
                 else :
                     try :
-                        video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+                        video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.playlist_path)
                         self.playlist_counter +=1
 
                     except (AttributeError, KeyError) as error :
                         self.bad_url = True
 
-    def download_playlist_high_res(self, current_video) :
+    def download_playlist_high_res(self, current_video, path) :
 
         # This means youtube is not including audio and video in the same file
         # It's a known issue with adapatative youtube streaming
@@ -513,7 +510,7 @@ class Downloader :
         os.rename("output.mp4", base_name + '.mp4')
 
         # Move the final file to user' downloads dir
-        os.system("move %s.mp4 %s" % (base_name, self.download_path))
+        os.system("move %s.mp4 %s" % (base_name, path))
 
         # Delete temp files
         os.system("del /f audio.mp3")
@@ -613,9 +610,10 @@ class Downloader :
             os.rename(audio, new_file)
 
         else :
+            self.playlist_path = self.download_path + '/' + self.yt_playlist.title
             self.playlist_len = len(self.yt_playlist.videos)
             for mp3 in self.yt_playlist.videos :
-                audio = mp3.streams.filter(only_audio=True).first().download(self.download_path)
+                audio = mp3.streams.filter(only_audio=True).first().download(self.playlist_path)
                 base, ext = os.path.splitext(audio)
                 new_file = base + '_audio' + '.mp3'
                 os.rename(audio, new_file)
