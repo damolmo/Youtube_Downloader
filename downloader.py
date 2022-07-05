@@ -441,7 +441,7 @@ class Downloader :
 
                 else :
                     try :
-                        self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+                        video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
                         self.playlist_counter +=1
 
                     except (AttributeError, KeyError) as error :
