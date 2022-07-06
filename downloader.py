@@ -1,4 +1,5 @@
 from resources import *
+from android import *
 import pytube
 from pytube import YouTube
 from pytube import Playlist
@@ -10,6 +11,8 @@ import os.path
 import platform
 import pyperclip
 from os.path import exists
+import json
+import shutil
 
 
 vec = pygame.math.Vector2
@@ -79,12 +82,16 @@ class Downloader :
         self.count = 0
         self.processing = False
 
-        self.home_button_rect = pygame.Rect(800, 300, 200, 200)
+        self.home_button_rect = pygame.Rect(800, 350, 75, 75)
+        self.android_button_rect = pygame.Rect(900, 350, 75, 75)
 
         self.bad_url = False
         self.bad_resolution = False
 
         self.playlist_path = ''
+
+        self.last_download_path = ''
+        self.last_download_type = ''
 
     def draw_progress(self) :
 
@@ -328,26 +335,30 @@ class Downloader :
 
 
         if self.previousprogress == 100 and self.playlist_len == 0 and not self.processing :
-            self.screen.blit(home_button, (850, 350))
+            self.screen.blit(home_button, (800, 350))
+            self.screen.blit(android_button, (900, 350))
             percentage = small_font.render("Your download is completed!", 1, WHITE)
             self.screen.blit(percentage, (750, 480))
 
         if self.previousprogress < 100 and self.playlist_len > 0 and not self.processing:
             if self.playlist_counter == self.playlist_len :
-                self.screen.blit(home_button, (850, 350))
+                self.screen.blit(home_button, (800, 350))
+                self.screen.blit(android_button, (900, 350))
                 percentage = small_font.render("Your download is completed!", 1, WHITE)
                 self.screen.blit(percentage, (750, 480))
 
         if self.bad_url :
-            self.screen.blit(home_button, (820, 280))
+            self.screen.blit(home_button, (800, 350))
             percentage = small_font.render("Bad URL/res, try again..", 1, WHITE)
             self.screen.blit(percentage, (750, 450))
 
 
+        # Buttons rect for debugging
+        #pygame.draw.rect(self.screen, WHITE, self.home_button_rect)
+        #pygame.draw.rect(self.screen, WHITE, self.android_button_rect)
 
         pygame.display.update()
 
-        
 
     def download_progress(self, stream, chunk, bytes_remaining):
 
@@ -366,6 +377,15 @@ class Downloader :
         if self.home_button_rect.collidepoint(mouse) :
             self.downloading = False
             self.downloader = 0
+
+        elif self.android_button_rect.collidepoint(mouse) :
+            self.downloading = False
+            android = Android()
+            yt_app_data["DOWNLOAD"]["PATH"] = self.last_download_path
+            yt_app_data["DOWNLOAD"]["FILE"] = self.last_download_type
+            write_json()
+
+            android.start_transfer()
 
     def download_controller(self) :
 
@@ -411,34 +431,90 @@ class Downloader :
         # Save it into an array
         self.resolutions_array = resolution
 
+    def remove_bad_char(self, title) :
+
+        title = title.translate(str.maketrans({
+        '-' : '_', 
+        'ñ' : 'n', 
+        '&' : 'and', 
+        'á' : 'a', 
+        'é' : 'e', 
+        'í' : 'i', 
+        'ó' : 'o', 
+        'ú' : 'u',
+        '!' : '',
+        '¡' : '',
+        '¿' : '',
+        '?' : '',
+        ':' : '',
+        '|' : '',
+        ',' : '',
+        ';' : '',
+        '(' : '',
+        ')' : '',
+        '[' : '',
+        ']' : '',
+        '=' : '',
+        '@' : '',
+        '~' : '',
+        '/' : '',
+        '%' : '',
+        '"' : '',
+        '$' : '',
+        '.' : '',
+        ' ' : '_',
+        "'" : '',
+        '#' : '',
+        '~' : ''
+
+        }))
+
+        return title
+
+
     def download_video(self) :
 
         # Check if we're downloading from a video or a playlist
+        self.playlist_path = self.download_path + '/' + self.remove_bad_char(self.yt_video.title)
+        self.last_download_path = self.playlist_path
+        try :
+            shutil.rmtree(self.playlist_path)
+            os.mkdir(self.playlist_path)
+
+        except FileNotFoundError as error:
+            os.mkdir(self.playlist_path)
 
         if self.format == "video" or self.format == "short" :
             if self.video_res == "1080p" or self.video_res == "1440p" or self.video_res == "2160p" or self.video_res == "4320p" :
+                
                 self.download_video_high_res()
+                self.last_download_type = "video"
                 self.high_res = False
 
             else :
                 # Get video properties + downloads it
                 try :
-                    self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.download_path)
+                    self.yt_video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.playlist_path)
+                    self.last_download_path = self.playlist_path
+                    self.last_download_type = "video"
 
                 except (AttributeError, KeyError) as error :
                     self.bad_url = True
 
         else :
             self.playlist_len = len(self.yt_playlist.videos)
-            self.playlist_path = self.download_path + '/' + self.yt_playlist.title
+
+
             for video in self.yt_playlist.videos:
                 if self.video_res == "1080p" or self.video_res == "1440p" or self.video_res == "2160p" or self.video_res == "4320p" :
                     self.download_playlist_high_res(video, self.playlist_path)
+                    self.last_download_type = "video"
                     self.playlist_counter +=1
 
                 else :
                     try :
                         video.streams.filter(res=self.video_res, file_extension='mp4').first().download(self.playlist_path)
+                        self.last_download_type = "video"
                         self.playlist_counter +=1
 
                     except (AttributeError, KeyError) as error :
@@ -473,44 +549,13 @@ class Downloader :
 
         # Combine both files into a single file
         self.processing = True
-        base_name = current_video.title.translate(str.maketrans({
-        '-' : '_', 
-        'ñ' : 'n', 
-        '&' : 'and', 
-        'á' : 'a', 
-        'é' : 'e', 
-        'í' : 'i', 
-        'ó' : 'o', 
-        'ú' : 'u',
-        '!' : '',
-        '¡' : '',
-        '¿' : '',
-        '?' : '',
-        ':' : '',
-        '|' : '',
-        ',' : '',
-        ';' : '',
-        '(' : '',
-        ')' : '',
-        '[' : '',
-        ']' : '',
-        '=' : '',
-        '@' : '',
-        '~' : '',
-        '/' : '',
-        '%' : '',
-        '"' : '',
-        '$' : '',
-        '.' : '',
-        ' ' : '_'
-
-        }))
+        base_name = self.remove_bad_char(current_video.title)
 
         os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
         os.rename("output.mp4", base_name + '.mp4')
 
         # Move the final file to user' downloads dir
-        os.system("move %s.mp4 %s" % (base_name, path))
+        os.system("move %s.mp4 %s" % (base_name, self.playlist_path))
 
         # Delete temp files
         os.system("del /f audio.mp3")
@@ -549,44 +594,13 @@ class Downloader :
 
         # Combine both files into a single file
         self.processing = True
-        base_name = self.video_title.translate(str.maketrans({
-        '-' : '_', 
-        'ñ' : 'n', 
-        '&' : 'and', 
-        'á' : 'a', 
-        'é' : 'e', 
-        'í' : 'i', 
-        'ó' : 'o', 
-        'ú' : 'u',
-        '!' : '',
-        '¡' : '',
-        '¿' : '',
-        '?' : '',
-        ':' : '',
-        '|' : '',
-        ',' : '',
-        ';' : '',
-        '(' : '',
-        ')' : '',
-        '[' : '',
-        ']' : '',
-        '=' : '',
-        '@' : '',
-        '~' : '',
-        '/' : '',
-        '%' : '',
-        '"' : '',
-        '$' : '',
-        '.' : '',
-        ' ' : '_'
-
-        }))
+        base_name = self.remove_bad_char(self.video_title)
 
         os.system("ffmpeg.exe -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4")
         os.rename("output.mp4", base_name + '.mp4')
 
         # Move the final file to user' downloads dir
-        os.system("move %s.mp4 %s" % (base_name, self.download_path))
+        os.system("move %s.mp4 %s" % (base_name, self.playlist_path))
 
         # Delete temp files
         os.system("del /f audio.mp3")
@@ -601,16 +615,20 @@ class Downloader :
         # Check if we're downloading from a video or a playlist
 
         audio = ''
+        self.last_download_type = "audio"
 
         if self.format == "video" or self.format == "short" :
+            self.playlist_path = self.download_path + '/' + self.remove_bad_char(self.yt_video.title)
+            self.last_download_path = self.playlist_path
             # Get audio properties + downloads it
-            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.download_path)
+            audio = self.yt_video.streams.filter(only_audio=True).first().download(self.playlist_path)
             base, ext = os.path.splitext(audio)
             new_file = base + '_audio' + '.mp3'
             os.rename(audio, new_file)
 
         else :
-            self.playlist_path = self.download_path + '/' + self.yt_playlist.title
+            self.playlist_path = self.download_path + '/' + self.remove_bad_char(self.yt_video.title)
+            self.last_download_path = self.playlist_path
             self.playlist_len = len(self.yt_playlist.videos)
             for mp3 in self.yt_playlist.videos :
                 audio = mp3.streams.filter(only_audio=True).first().download(self.playlist_path)

@@ -52,6 +52,7 @@ sub_03 = pygame.image.load(os.path.join('Assets/subtitle', "sub_03.png"))
 video_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "video.png")), (300,100))
 audio_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "audio.png")), (300,100))
 home_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "home.png")), (75, 75))
+android_button = pygame.transform.scale(pygame.image.load(os.path.join('Assets/buttons', "android.png")), (75, 75))
 
 # Formats
 videos_button = pygame.image.load(os.path.join('Assets/buttons', "videos.png"))
@@ -68,4 +69,9 @@ loader_06 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader
 loader_07 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_6_delay-0.1s.gif")), (100,100))
 loader_08 = pygame.transform.scale(pygame.image.load(os.path.join('Assets/loader', "frame_7_delay-0.1s.gif")), (100,100))
 
+# Android
+android_bg = pygame.transform.scale(pygame.image.load(os.path.join('Assets/android', "background.png")), (400, 600))
 
+
+# Music
+loading_music = pygame.mixer.Sound("Assets/music/load.mp3")

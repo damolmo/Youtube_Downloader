@@ -29,23 +29,25 @@ class Format :
         self.clock = pygame.time.Clock()
         self.color = pygame.Color('white')
         self.font = pygame.font.Font(None, 60)
-        self.video_rect = pygame.Rect(540, 430, 300, 100)
-        self.short_rect = pygame.Rect(880, 420, 300, 100)
-        self.playlist_rect = pygame.Rect(200, 420, 300, 100)
+        self.video_rect = pygame.Rect(540, 430, 200, 200)
+        self.short_rect = pygame.Rect(880, 420, 200, 200)
+        self.playlist_rect = pygame.Rect(200, 420, 200, 200)
         self.choosing_format = True
         self.format = ''
 
     def check_click(self, mouse) :
         if self.video_rect.collidepoint(mouse) :
             self.format = "video"
+            self.choosing_format = False
+
 
         elif self.short_rect.collidepoint(mouse) :
             self.format = "short"
+            self.choosing_format = False
 
         elif self.playlist_rect.collidepoint(mouse) :
             self.format = "playlist"
-
-        self.choosing_format = False
+            self.choosing_format = False
 
     def player_control(self) :
 
@@ -78,6 +80,10 @@ class Format :
             self.screen.blit(videos_button, (self.video_rect.x, self.video_rect.y))
             self.screen.blit(short_button, (self.short_rect.x, self.short_rect.y))
             self.screen.blit(playlist_button, (self.playlist_rect.x, self.playlist_rect.y))
+
+            #pygame.draw.rect(self.screen, WHITE, self.video_rect)
+            #pygame.draw.rect(self.screen, WHITE, self.playlist_rect)
+            #pygame.draw.rect(self.screen, WHITE, self.short_rect)
 
             pygame.display.update()
 
