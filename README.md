@@ -18,10 +18,10 @@ Youtube Downloader made with Python, pygame framework and pytube library
 
 # Features
 • Desktop downloader for YouTube<br/>
-• No Python Required!<br/>
+• No Python Required! Just install and run it<br/>
 • 3-In-One downloader (Shorts, Videos and Playlist from YouTube<br/>
-• Manual choose of video resolution from 144p to 4k!<br/>
-• Android file transfer of downloaded files<br/>
+• Choose your video resolution from 144p to 8k!<br/>
+• Android file transfer for downloaded files<br/>
 
 # Installation
 
