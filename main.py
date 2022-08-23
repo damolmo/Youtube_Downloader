@@ -37,6 +37,12 @@ import platform
 import pyperclip
 from os.path import exists
 
+# This is a fix for GNU/Linux systems
+if platform.system() == "Linux" :
+    os.system("sudo apt-get install python3-tk")
+    os.system("sudo apt-get install python3-pil python3-pil.imagetk")
+    os.system("sudo apt-get install xsel")
+
 pygame.font.init() # Import font
 pygame.mixer.init() # Import sounds
 
